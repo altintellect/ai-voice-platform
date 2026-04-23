@@ -28,7 +28,6 @@ module acs 'modules/acs.bicep' = {
   params: {
     projectName: projectName
     environment: environment
-    location: location
   }
 }
 

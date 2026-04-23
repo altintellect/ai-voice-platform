@@ -8,8 +8,8 @@ param environment string
 @description('Azure region')
 param location string
 
-// Storage account name must be lowercase, max 24 chars, no hyphens
-var storageAccountName = 'st${projectName}${environment}'
+var uniqueSuffix = take(uniqueString(resourceGroup().id), 6)
+var storageAccountName = 'st${projectName}${environment}${uniqueSuffix}'
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
@@ -31,7 +31,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   }
 }
 
-// Blob container for call recordings
 resource recordingsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
   name: '${storage.name}/default/recordings'
   properties: {

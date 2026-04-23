@@ -8,6 +8,12 @@ param environment string
 @description('Azure region')
 param location string
 
+@secure()
+param acsConnectionString string = 'placeholder-to-be-updated'
+
+@secure()
+param openAiApiKey string = 'placeholder-to-be-updated'
+
 // Log Analytics Workspace for Container Apps
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'log-${projectName}-${environment}'
@@ -60,11 +66,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       secrets: [
         {
           name: 'acs-connection-string'
-          value: 'placeholder'
+          value: acsConnectionString
         }
         {
           name: 'openai-api-key'
-          value: 'placeholder'
+          value: openAiApiKey
         }
       ]
     }

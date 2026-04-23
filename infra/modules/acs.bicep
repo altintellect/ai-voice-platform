@@ -5,9 +5,6 @@ param projectName string
 @description('Environment name')
 param environment string
 
-@description('Azure region')
-param location string
-
 resource acs 'Microsoft.Communication/communicationServices@2023-04-01' = {
   name: 'acs-${projectName}-${environment}'
   location: 'global'
