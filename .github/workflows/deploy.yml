@@ -11,6 +11,9 @@ env:
   AZURE_LOCATION: swedencentral
   PROJECT_NAME: aivoice
   ENVIRONMENT: dev
+  CONTAINER_APP_NAME: ca-aivoice-dev
+  RESOURCE_GROUP: rg-aivoice-dev
+  ACR_NAME: acraivoicedev
 
 jobs:
   deploy-infra:
@@ -52,11 +55,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to ACR
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+        run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Build and push Docker image
         run: |
@@ -66,9 +65,8 @@ jobs:
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:latest
 
       - name: Deploy to Container App
-        uses: azure/container-apps-deploy-action@v1
-        with:
-          acrName: acraivoicedev
-          containerAppName: ca-aivoice-dev
-          resourceGroup: rg-aivoice-dev
-          imageToDeploy: ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:${{ github.sha }}
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:${{ github.sha }}
