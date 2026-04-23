@@ -1,0 +1,72 @@
+# .github/workflows/deploy.yml
+name: Deploy AI Voice Platform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_LOCATION: eastus
+  PROJECT_NAME: aivoice
+  ENVIRONMENT: dev
+
+jobs:
+  deploy-infra:
+    name: Deploy Bicep Infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Bicep
+        uses: azure/arm-deploy@v2
+        with:
+          scope: subscription
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          region: ${{ env.AZURE_LOCATION }}
+          template: ./infra/main.bicep
+          parameters: >
+            environment=${{ env.ENVIRONMENT }}
+            location=${{ env.AZURE_LOCATION }}
+            projectName=${{ env.PROJECT_NAME }}
+          failOnStdErr: false
+
+  deploy-voiceagent:
+    name: Build & Deploy Voice Agent
+    runs-on: ubuntu-latest
+    needs: deploy-infra
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and push container image
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Docker build and push
+        run: |
+          docker build ./voiceagent -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:${{ github.sha }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:${{ github.sha }}
+
+      - name: Deploy to Container App
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          acrName: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          containerAppName: ca-aivoice-dev
+          resourceGroup: rg-aivoice-dev
+          imageToDeploy: ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:${{ github.sha }}
