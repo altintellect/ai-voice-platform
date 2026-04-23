@@ -33,7 +33,7 @@ resource gpt4o 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-prev
   name: 'gpt-4o'
   sku: {
     name: 'Standard'
-    capacity: 1
+    capacity: 50
   }
   properties: {
     model: {
@@ -49,7 +49,7 @@ resource whisper 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-pr
   name: 'whisper'
   sku: {
     name: 'Standard'
-    capacity: 1
+    capacity: 3
   }
   properties: {
     model: {
@@ -59,6 +59,23 @@ resource whisper 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-pr
     }
   }
   dependsOn: [gpt4o]
+}
+
+resource tts 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
+  parent: openai
+  name: 'tts'
+  sku: {
+    name: 'Standard'
+    capacity: 3
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'tts'
+      version: '001'
+    }
+  }
+  dependsOn: [whisper]
 }
 
 output endpoint string = openai.properties.endpoint
