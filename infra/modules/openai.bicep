@@ -28,56 +28,6 @@ resource openai 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = {
   }
 }
 
-resource gpt4o 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
-  parent: openai
-  name: 'gpt-4o'
-  sku: {
-    name: 'Standard'
-    capacity: 50
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-4o'
-      version: '2024-11-20'
-    }
-  }
-}
-
-resource whisper 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
-  parent: openai
-  name: 'whisper'
-  sku: {
-    name: 'Standard'
-    capacity: 3
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'whisper'
-      version: '001'
-    }
-  }
-  dependsOn: [gpt4o]
-}
-
-resource tts 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
-  parent: openai
-  name: 'tts'
-  sku: {
-    name: 'Standard'
-    capacity: 3
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'tts'
-      version: '001'
-    }
-  }
-  dependsOn: [whisper]
-}
-
 output endpoint string = openai.properties.endpoint
 output openAiName string = openai.name
 output openAiId string = openai.id
