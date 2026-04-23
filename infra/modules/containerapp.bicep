@@ -8,12 +8,6 @@ param environment string
 @description('Azure region')
 param location string
 
-@secure()
-param acsConnectionString string = ''
-
-@secure()
-param openAiApiKey string = ''
-
 // Log Analytics Workspace for Container Apps
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'log-${projectName}-${environment}'
@@ -63,16 +57,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         targetPort: 8000
         transport: 'http'
       }
-      secrets: [
-        {
-          name: 'acs-connection-string'
-          value: acsConnectionString
-        }
-        {
-          name: 'openai-api-key'
-          value: openAiApiKey
-        }
-      ]
     }
     template: {
       containers: [
@@ -84,14 +68,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: '1Gi'
           }
           env: [
-            {
-              name: 'ACS_CONNECTION_STRING'
-              secretRef: 'acs-connection-string'
-            }
-            {
-              name: 'OPENAI_API_KEY'
-              secretRef: 'openai-api-key'
-            }
             {
               name: 'ENVIRONMENT'
               value: environment
