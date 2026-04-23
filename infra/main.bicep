@@ -5,7 +5,7 @@ targetScope = 'subscription'
 param environment string = 'dev'
 
 @description('Azure region')
-param location string = 'eastus'
+param location string = 'swedencentral'
 
 @description('Project name')
 param projectName string = 'aivoice'

@@ -33,7 +33,7 @@ resource gpt4o 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-prev
   name: 'gpt-4o'
   sku: {
     name: 'Standard'
-    capacity: 10
+    capacity: 1
   }
   properties: {
     model: {

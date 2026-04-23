@@ -9,10 +9,10 @@ param environment string
 param location string
 
 @secure()
-param acsConnectionString string = 'placeholder-to-be-updated'
+param acsConnectionString string = ''
 
 @secure()
-param openAiApiKey string = 'placeholder-to-be-updated'
+param openAiApiKey string = ''
 
 // Log Analytics Workspace for Container Apps
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
