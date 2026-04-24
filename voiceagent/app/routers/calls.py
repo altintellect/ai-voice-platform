@@ -4,10 +4,7 @@ import json
 from fastapi import APIRouter, Request, Response
 from azure.communication.callautomation import (
     CallAutomationClient,
-    CallConnectionClient,
     TextSource,
-)
-from azure.communication.callautomation.models import (
     RecognizeInputType,
 )
 from openai import AzureOpenAI
@@ -29,13 +26,11 @@ openai_client = AzureOpenAI(
     api_version=settings.AZURE_OPENAI_API_VERSION,
 ) if settings.AZURE_OPENAI_API_KEY else None
 
-# Conversation history per call
 conversation_history: dict = {}
 
 
 @router.post("/incoming")
 async def incoming_call(request: Request):
-    """Handle incoming call webhook from ACS."""
     body = await request.json()
     logger.info(f"Incoming call event: {json.dumps(body)}")
 
@@ -44,23 +39,19 @@ async def incoming_call(request: Request):
         event_data = event.get("data", {})
 
         if event_type == "Microsoft.EventGrid.SubscriptionValidationEvent":
-            # EventGrid subscription validation handshake
             validation_code = event_data.get("validationCode")
             return {"validationResponse": validation_code}
 
         if event_type == "Microsoft.Communication.IncomingCall":
             incoming_call_context = event_data.get("incomingCallContext")
             call_id = event_data.get("correlationId", "unknown")
-
             logger.info(f"Answering call: {call_id}")
 
-            # Answer the call
-            answer_result = acs_client.answer_call(
+            acs_client.answer_call(
                 incoming_call_context=incoming_call_context,
                 callback_url=f"{settings.CALLBACK_BASE_URL}/calls/events",
             )
 
-            # Initialize conversation history
             conversation_history[call_id] = [
                 {
                     "role": "system",
@@ -77,7 +68,6 @@ async def incoming_call(request: Request):
 
 @router.post("/events")
 async def call_events(request: Request):
-    """Handle call automation events from ACS."""
     body = await request.json()
     logger.info(f"Call event received: {json.dumps(body)}")
 
@@ -94,7 +84,6 @@ async def call_events(request: Request):
             speech_result = event_data.get("speechResult", {})
             user_speech = speech_result.get("speech", "")
             call_id = event_data.get("correlationId", "unknown")
-
             logger.info(f"User said: {user_speech}")
             await _process_speech(call_connection_id, call_id, user_speech)
 
@@ -114,9 +103,7 @@ async def call_events(request: Request):
 
 
 async def _play_greeting(call_connection_id: str):
-    """Play greeting and start listening."""
     call_connection = acs_client.get_call_connection(call_connection_id)
-
     call_connection.start_recognizing_media(
         input_type=RecognizeInputType.SPEECH,
         play_prompt=TextSource(
@@ -129,16 +116,13 @@ async def _play_greeting(call_connection_id: str):
 
 
 async def _process_speech(call_connection_id: str, call_id: str, user_speech: str):
-    """Send speech to GPT-4o and play response."""
     if not openai_client:
         await _play_text(call_connection_id, "AI service is not configured.")
         return
 
-    # Add user message to history
     history = conversation_history.get(call_id, [])
     history.append({"role": "user", "content": user_speech})
 
-    # Get GPT-4o response
     response = openai_client.chat.completions.create(
         model=settings.AZURE_OPENAI_GPT4O_DEPLOYMENT,
         messages=history,
@@ -155,7 +139,6 @@ async def _process_speech(call_connection_id: str, call_id: str, user_speech: st
 
 
 async def _play_text(call_connection_id: str, text: str):
-    """Play text and hang up."""
     call_connection = acs_client.get_call_connection(call_connection_id)
     call_connection.play_media_to_all(
         play_source=TextSource(text=text, voice_name="en-US-JennyNeural")
@@ -163,7 +146,6 @@ async def _play_text(call_connection_id: str, text: str):
 
 
 async def _play_text_and_listen(call_connection_id: str, text: str):
-    """Play text and keep listening."""
     call_connection = acs_client.get_call_connection(call_connection_id)
     call_connection.start_recognizing_media(
         input_type=RecognizeInputType.SPEECH,
