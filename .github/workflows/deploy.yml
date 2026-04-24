@@ -64,6 +64,14 @@ jobs:
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:${{ github.sha }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/voiceagent:latest
 
+      - name: Set ACR registry on Container App
+        run: |
+          az containerapp registry set \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --server ${{ secrets.REGISTRY_LOGIN_SERVER }} \
+            --identity system
+
       - name: Deploy to Container App
         run: |
           az containerapp update \
