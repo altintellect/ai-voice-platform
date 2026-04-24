@@ -43,10 +43,6 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: 'acr${projectName}${environment}'
-}
-
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: 'ca-${projectName}-${environment}'
   location: location
@@ -95,16 +91,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     project: projectName
     environment: environment
     managedBy: 'bicep'
-  }
-}
-
-resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerApp.id, 'acrpull')
-  scope: acr
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-    principalId: containerApp.identity.principalId
-    principalType: 'ServicePrincipal'
   }
 }
 
